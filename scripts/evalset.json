@@ -1,0 +1,10 @@
+[
+  {
+    "question": "What is Sage's refund policy?",
+    "expect_sources": ["policy"]
+  },
+  {
+    "question": "How do I reset my password?",
+    "expect_sources": ["account"]
+  }
+]

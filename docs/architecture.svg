@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowDash" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="600" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Sage — Architecture</text>
+
+  <!-- Clients -->
+  <g>
+    <rect x="170" y="50" width="200" height="56" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <text x="270" y="74" text-anchor="middle" font-size="14" font-weight="600" fill="#0f172a">Web UI</text>
+    <text x="270" y="92" text-anchor="middle" font-size="11" fill="#475569">multi-chat · SSE client</text>
+
+    <rect x="530" y="50" width="200" height="56" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+    <text x="630" y="74" text-anchor="middle" font-size="14" font-weight="600" fill="#0f172a">Terminal CLI</text>
+    <text x="630" y="92" text-anchor="middle" font-size="11" fill="#475569">app/cli.py · stdio</text>
+  </g>
+
+  <!-- Server container -->
+  <rect x="60" y="140" width="780" height="320" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="76" y="162" font-size="13" font-weight="700" fill="#334155">FastAPI server (app/)</text>
+
+  <!-- support modules -->
+  <rect x="84" y="176" width="180" height="48" rx="6" fill="#eef2f7" stroke="#94a3b8" stroke-width="1"/>
+  <text x="174" y="196" text-anchor="middle" font-size="11" fill="#475569">config.py — settings/models</text>
+  <text x="174" y="212" text-anchor="middle" font-size="11" fill="#475569">errors.py — friendly errors</text>
+
+  <!-- main.py -->
+  <rect x="350" y="180" width="200" height="48" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.3"/>
+  <text x="450" y="200" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">main.py</text>
+  <text x="450" y="217" text-anchor="middle" font-size="10.5" fill="#475569">routes · auth · SSE</text>
+
+  <!-- chat.py -->
+  <rect x="350" y="262" width="200" height="48" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.3"/>
+  <text x="450" y="282" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">chat.py</text>
+  <text x="450" y="299" text-anchor="middle" font-size="10.5" fill="#475569">orchestration · persona</text>
+
+  <!-- rag / store / bedrock_client -->
+  <rect x="110" y="372" width="180" height="50" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.3"/>
+  <text x="200" y="392" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">rag.py</text>
+  <text x="200" y="409" text-anchor="middle" font-size="10.5" fill="#475569">KB retrieval (boto3)</text>
+
+  <rect x="360" y="372" width="180" height="50" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.3"/>
+  <text x="450" y="392" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">store.py</text>
+  <text x="450" y="409" text-anchor="middle" font-size="10.5" fill="#475569">session memory</text>
+
+  <rect x="610" y="372" width="180" height="50" rx="6" fill="#ffffff" stroke="#475569" stroke-width="1.3"/>
+  <text x="700" y="390" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">bedrock_client.py</text>
+  <text x="700" y="408" text-anchor="middle" font-size="10.5" fill="#475569">AnthropicBedrock</text>
+
+  <!-- External: Bedrock + Redis -->
+  <rect x="110" y="510" width="180" height="58" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="200" y="533" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Bedrock Knowledge Base</text>
+  <text x="200" y="551" text-anchor="middle" font-size="10.5" fill="#92400e">Retrieve (vector search)</text>
+
+  <rect x="360" y="510" width="180" height="58" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="450" y="533" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Redis</text>
+  <text x="450" y="551" text-anchor="middle" font-size="10.5" fill="#991b1b">optional persistence</text>
+
+  <rect x="610" y="510" width="180" height="58" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="700" y="533" text-anchor="middle" font-size="13" font-weight="600" fill="#0f172a">Claude on Bedrock</text>
+  <text x="700" y="551" text-anchor="middle" font-size="10.5" fill="#92400e">streamed tokens (HTTPS)</text>
+
+  <!-- Arrows -->
+  <g stroke="#475569" stroke-width="1.5" fill="none">
+    <!-- Web UI -> main -->
+    <line x1="285" y1="106" x2="410" y2="178" marker-end="url(#arrow)"/>
+    <!-- CLI -> chat (right side) -->
+    <polyline points="630,106 630,286 552,286" marker-end="url(#arrow)"/>
+    <!-- main -> chat -->
+    <line x1="450" y1="228" x2="450" y2="260" marker-end="url(#arrow)"/>
+    <!-- chat -> rag -->
+    <line x1="395" y1="310" x2="225" y2="370" marker-end="url(#arrow)"/>
+    <!-- chat -> store -->
+    <line x1="450" y1="310" x2="450" y2="370" marker-end="url(#arrow)"/>
+    <!-- chat -> bedrock_client -->
+    <line x1="505" y1="310" x2="675" y2="370" marker-end="url(#arrow)"/>
+    <!-- rag -> KB -->
+    <line x1="200" y1="422" x2="200" y2="508" marker-end="url(#arrow)"/>
+    <!-- bedrock_client -> Claude -->
+    <line x1="700" y1="422" x2="700" y2="508" marker-end="url(#arrow)"/>
+  </g>
+  <!-- store -> Redis (optional, dashed) -->
+  <line x1="450" y1="422" x2="450" y2="508" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#arrowDash)"/>
+
+  <!-- Arrow labels -->
+  <text x="300" y="140" font-size="10.5" fill="#2563eb">POST /api/chat (SSE)</text>
+  <text x="640" y="180" font-size="10.5" fill="#2563eb">stdio</text>
+  <text x="208" y="470" font-size="10.5" fill="#92400e">Retrieve</text>
+  <text x="458" y="470" font-size="10.5" fill="#dc2626">if REDIS_URL</text>
+  <text x="708" y="470" font-size="10.5" fill="#92400e">stream</text>
+
+  <!-- Legend -->
+  <text x="76" y="588" font-size="10.5" fill="#64748b">Dashed = optional · Amber = Amazon Bedrock · Red = Redis · Blue = clients</text>
+</svg>

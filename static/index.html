@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sage</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #171a23; --side: #131620; --user: #2563eb; --bot: #232734;
+    --text: #e7e9ee; --muted: #8b90a0; --accent: #f5b301; --border: #262a36;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: flex; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Sidebar */
+  #sidebar { width: 260px; background: var(--side); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  #sidebar .top { padding: 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+  #sidebar .top .logo { color: var(--accent); font-size: 20px; }
+  #sidebar .top h1 { font-size: 16px; margin: 0; flex: 1; }
+  #newChat { background: var(--user); color: #fff; border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  #chats { flex: 1; overflow-y: auto; padding: 8px; }
+  .chatItem { display: flex; align-items: center; gap: 6px; padding: 9px 10px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 14px; }
+  .chatItem:hover { background: #1c2130; color: var(--text); }
+  .chatItem.active { background: #232a3d; color: var(--text); }
+  .chatItem .title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chatItem .del { opacity: 0; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 14px; }
+  .chatItem:hover .del { opacity: 1; }
+
+  /* Main */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  #hamburger { display: none; background: transparent; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
+  .controls { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .controls select, .controls button { background: var(--panel); color: var(--text); border: 1px solid #313646; border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
+  .controls label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; max-width: 860px; width: 100%; margin: 0 auto; }
+  .msg { padding: 12px 16px; border-radius: 12px; line-height: 1.55; }
+  .msg.user { background: var(--user); align-self: flex-end; max-width: 80%; white-space: pre-wrap; }
+  .msg.bot { background: var(--bot); align-self: flex-start; max-width: 92%; }
+  .msg.bot p:first-child { margin-top: 0; } .msg.bot p:last-child { margin-bottom: 0; }
+  .msg.bot pre { background: #0d0f15; padding: 10px; border-radius: 8px; overflow-x: auto; }
+  .msg.bot code { background: #0d0f15; padding: 2px 5px; border-radius: 4px; font-size: 0.9em; }
+  .msg.bot pre code { padding: 0; }
+  .meta { font-size: 11px; color: var(--muted); margin-top: 8px; border-top: 1px solid #313646; padding-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .meta a { color: var(--accent); text-decoration: none; }
+  .copy { background: transparent; border: 1px solid #313646; color: var(--muted); border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
+  .copy:hover { color: var(--text); }
+  .empty { color: var(--muted); text-align: center; margin-top: 40px; }
+
+  form { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border); max-width: 860px; width: 100%; margin: 0 auto; }
+  textarea { flex: 1; resize: none; background: var(--panel); color: var(--text); border: 1px solid #313646; border-radius: 10px; padding: 12px; font: inherit; max-height: 160px; }
+  textarea:focus { outline: none; border-color: var(--user); }
+  button.send { background: var(--user); color: #fff; border: none; border-radius: 10px; padding: 0 20px; cursor: pointer; font-weight: 600; }
+  button.send:disabled { opacity: 0.5; cursor: default; }
+
+  @media (max-width: 720px) {
+    #sidebar { position: fixed; z-index: 10; height: 100%; transform: translateX(-100%); transition: transform .2s; }
+    #sidebar.open { transform: translateX(0); }
+    #hamburger { display: block; }
+  }
+</style>
+</head>
+<body>
+  <aside id="sidebar">
+    <div class="top">
+      <span class="logo">◆</span>
+      <h1>Sage</h1>
+      <button id="newChat">+ New</button>
+    </div>
+    <div id="chats"></div>
+  </aside>
+
+  <div id="main">
+    <header>
+      <button id="hamburger">☰</button>
+      <div class="controls">
+        <select id="model" title="Model"></select>
+        <label><input type="checkbox" id="thinking" /> Thinking</label>
+        <button id="key" title="Set API key">🔑</button>
+      </div>
+    </header>
+
+    <div id="chat"></div>
+
+    <form id="form">
+      <textarea id="input" rows="1" placeholder="Message Sage…" autofocus></textarea>
+      <button class="send" type="submit">Send</button>
+    </form>
+  </div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let chats = JSON.parse(localStorage.getItem("sage_chats") || "[]");
+let activeId = localStorage.getItem("sage_active") || null;
+let streaming = false;
+
+const chatEl = document.getElementById("chat");
+const chatsEl = document.getElementById("chats");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const sendBtn = form.querySelector("button.send");
+const modelSel = document.getElementById("model");
+const thinkingBox = document.getElementById("thinking");
+const sidebar = document.getElementById("sidebar");
+
+marked.setOptions({ breaks: true });
+
+function saveChats() {
+  localStorage.setItem("sage_chats", JSON.stringify(chats));
+  localStorage.setItem("sage_active", activeId || "");
+}
+function activeChat() { return chats.find(c => c.id === activeId); }
+function getKey() { return localStorage.getItem("sage_key") || ""; }
+function authHeaders() {
+  const h = { "Content-Type": "application/json" };
+  const k = getKey();
+  if (k) h["X-API-Key"] = k;
+  return h;
+}
+function promptForKey() {
+  const k = prompt("Enter the Sage API key:");
+  if (k) localStorage.setItem("sage_key", k.trim());
+}
+
+// ── Chat management ──────────────────────────────────────────────────────────
+function newChat() {
+  const c = { id: crypto.randomUUID(), title: "New chat", messages: [] };
+  chats.unshift(c);
+  activeId = c.id;
+  saveChats();
+  renderSidebar();
+  renderMessages();
+  input.focus();
+}
+function selectChat(id) {
+  if (streaming) return;
+  activeId = id;
+  saveChats();
+  renderSidebar();
+  renderMessages();
+  if (window.innerWidth <= 720) sidebar.classList.remove("open");
+}
+async function deleteChat(id) {
+  await fetch("/api/reset", { method: "POST", headers: authHeaders(), body: JSON.stringify({ session_id: id }) }).catch(() => {});
+  chats = chats.filter(c => c.id !== id);
+  if (activeId === id) activeId = chats[0]?.id || null;
+  if (!chats.length) { newChat(); return; }
+  saveChats();
+  renderSidebar();
+  renderMessages();
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  chatsEl.innerHTML = "";
+  for (const c of chats) {
+    const item = document.createElement("div");
+    item.className = "chatItem" + (c.id === activeId ? " active" : "");
+    const title = document.createElement("span");
+    title.className = "title";
+    title.textContent = c.title;
+    const del = document.createElement("button");
+    del.className = "del"; del.textContent = "✕"; del.title = "Delete chat";
+    del.onclick = (e) => { e.stopPropagation(); deleteChat(c.id); };
+    item.appendChild(title);
+    item.appendChild(del);
+    item.onclick = () => selectChat(c.id);
+    chatsEl.appendChild(item);
+  }
+}
+
+function linkify(source) {
+  if (/^https?:\/\//.test(source)) return `<a href="${source}" target="_blank" rel="noopener">${source}</a>`;
+  if (source.startsWith("s3://")) return `<a href="https://s3.console.aws.amazon.com/s3/object/${source.slice(5)}" target="_blank" rel="noopener">${source}</a>`;
+  return source;
+}
+
+function messageEl(msg) {
+  const el = document.createElement("div");
+  el.className = `msg ${msg.role}`;
+  if (msg.role === "user") { el.textContent = msg.text; return el; }
+  el.innerHTML = DOMPurify.sanitize(marked.parse(msg.text || ""));
+  attachMeta(el, msg);
+  return el;
+}
+
+function attachMeta(el, msg) {
+  if (!msg.text) return;
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  const copy = document.createElement("button");
+  copy.className = "copy"; copy.textContent = "Copy";
+  copy.onclick = () => { navigator.clipboard.writeText(msg.text); copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy", 1200); };
+  meta.appendChild(copy);
+  if (msg.sources?.length) {
+    const s = document.createElement("span");
+    s.innerHTML = "Sources: " + msg.sources.map(x => linkify(x.source)).join(" · ");
+    meta.appendChild(s);
+  }
+  if (msg.usage) {
+    const u = document.createElement("span");
+    u.textContent = `${msg.usage.input_tokens}+${msg.usage.output_tokens} tok · ~$${msg.usage.est_cost_usd}`;
+    meta.appendChild(u);
+  }
+  el.appendChild(meta);
+}
+
+function renderMessages() {
+  chatEl.innerHTML = "";
+  const c = activeChat();
+  if (!c || !c.messages.length) {
+    chatEl.innerHTML = '<div class="empty">Ask Sage anything.</div>';
+    return;
+  }
+  for (const m of c.messages) chatEl.appendChild(messageEl(m));
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+// ── Sending ──────────────────────────────────────────────────────────────────
+input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; });
+input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const message = input.value.trim();
+  if (!message || streaming) return;
+  const c = activeChat();
+  if (!c) return;
+
+  // Title from first message.
+  if (c.title === "New chat") { c.title = message.slice(0, 40); renderSidebar(); }
+
+  const userMsg = { role: "user", text: message };
+  c.messages.push(userMsg);
+  if (chatEl.querySelector(".empty")) chatEl.innerHTML = "";
+  chatEl.appendChild(messageEl(userMsg));
+  input.value = ""; input.style.height = "auto";
+
+  const botMsg = { role: "bot", text: "", sources: null, usage: null };
+  const botEl = document.createElement("div");
+  botEl.className = "msg bot";
+  chatEl.appendChild(botEl);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  streaming = true; sendBtn.disabled = true;
+  try {
+    const resp = await fetch("/api/chat", {
+      method: "POST", headers: authHeaders(),
+      body: JSON.stringify({ session_id: c.id, message, model: modelSel.value || null, enable_thinking: thinkingBox.checked }),
+    });
+    if (resp.status === 401) { botEl.textContent = "🔑 API key required or invalid. Click the key icon."; promptForKey(); return; }
+    if (!resp.ok) { botEl.textContent = "⚠️ Server error " + resp.status; return; }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const evt = JSON.parse(line.slice(6));
+        if (evt.type === "delta") { botMsg.text += evt.text; botEl.innerHTML = DOMPurify.sanitize(marked.parse(botMsg.text)); }
+        else if (evt.type === "sources") botMsg.sources = evt.sources;
+        else if (evt.type === "done") botMsg.usage = evt.usage;
+        else if (evt.type === "error") { botMsg.text = "⚠️ " + evt.message; botEl.textContent = botMsg.text; }
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+    }
+    // Finalize: re-render with meta and persist.
+    botEl.innerHTML = DOMPurify.sanitize(marked.parse(botMsg.text || ""));
+    attachMeta(botEl, botMsg);
+    c.messages.push(botMsg);
+    saveChats();
+  } catch (err) {
+    botEl.textContent = "⚠️ " + err.message;
+  } finally {
+    streaming = false; sendBtn.disabled = false; input.focus();
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+});
+
+// ── Controls ─────────────────────────────────────────────────────────────────
+document.getElementById("newChat").addEventListener("click", newChat);
+document.getElementById("key").addEventListener("click", promptForKey);
+document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const cfg = await (await fetch("/api/config")).json();
+    for (const m of cfg.models) {
+      const opt = document.createElement("option");
+      opt.value = m.id; opt.textContent = m.label;
+      if (m.id === cfg.default_model) opt.selected = true;
+      modelSel.appendChild(opt);
+    }
+    thinkingBox.checked = !!cfg.thinking_default;
+    if (cfg.auth_required && !getKey()) promptForKey();
+  } catch { /* server may be down */ }
+
+  if (!chats.length || !activeChat()) newChat();
+  else { renderSidebar(); renderMessages(); }
+})();
+</script>
+</body>
+</html>

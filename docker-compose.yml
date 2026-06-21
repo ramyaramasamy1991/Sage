@@ -1,0 +1,25 @@
+services:
+  sage:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # Override host-local defaults for the container network.
+      APP_HOST: 0.0.0.0
+      REDIS_URL: redis://redis:6379/0
+      # AWS creds: prefer mounting ~/.aws or injecting a role. For quick local
+      # runs, these come from .env (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
