@@ -164,9 +164,13 @@ python -m scripts.eval_rag  # edit scripts/evalset.json for your docs
 
 ## Notes & next steps
 
-- Conversation memory is in-process (lost on restart). Swap `_sessions` in
-  `app/chat.py` for Redis/DB for production.
+- Conversation memory defaults to in-process (lost on restart). Set `REDIS_URL`
+  to persist and share sessions across instances (`app/store.py`).
 - For higher throughput / lower cost, set `BEDROCK_MODEL_ID` to a Sonnet profile
   (e.g. `us.anthropic.claude-sonnet-4-6`).
 - Bedrock does not support Anthropic server-side tools or refusal fallbacks; the
   Messages API surface (streaming, thinking, system prompts) works as usual.
+
+## License
+
+Released under the [MIT License](LICENSE).
